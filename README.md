@@ -1,5 +1,6 @@
 # GazeMap: Webcam Eye Tracking and Attention Heatmaps
 
+[![CI](https://github.com/fammad/GazeMap/actions/workflows/ci.yml/badge.svg)](https://github.com/fammad/GazeMap/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
 [![OpenCV](https://img.shields.io/badge/OpenCV-5C3EE8?logo=opencv&logoColor=white)](https://opencv.org/)
@@ -56,7 +57,7 @@ MediaPipe finds the eye and mouth corners, a 3D face model gives the head pose, 
 | Dataset | MPIIGaze, normalized eye images: 15 people, 213,658 frames, 427,316 eye images (left eyes mirrored) |
 | Protocol | Leave-one-person-out (LOPO): 15 folds, each trains a fresh model on 14 people and tests on the held-out one |
 | Metric | Mean angular error (MAE) in degrees between predicted and true 3D gaze vectors |
-| Averaging | Person-equal: MAE per held-out person, then the mean over 15 people. ± is the standard error over people |
+| Averaging | Person-equal: MAE per held-out person, then the mean over 15 people. Standard errors are in [docs/EVALUATION.md](docs/EVALUATION.md) |
 | Model | 2 conv layers (20, 50 filters, 5×5) + FC 500 + head pose → pitch, yaw. Same layout as MnistNet in Zhang et al. |
 | Training | Adam, lr 1e-3 (×0.1 after epoch 10), 15 epochs, batch 128, MSE loss, fixed seed. Last epoch reported, no early stopping on test data |
 
@@ -64,10 +65,10 @@ MediaPipe finds the eye and mouth corners, a 3D face model gives the head pose, 
 
 | Condition | MAE | People improved |
 |---|---|---|
-| Unseen person, single eye | 6.03° ± 0.23 | |
-| Unseen person, both eyes fused in camera space | 4.97° ± 0.21 | 15/15 |
-| + 9-frame offset calibration from one day, tested on all other days | **3.98° ± 0.23** | 13/15 |
-| + 13-frame affine calibration (as in the demo), other days | 4.01° ± 0.25 | |
+| Unseen person, single eye | 6.03° | |
+| Unseen person, both eyes fused in camera space | 4.97° | 15/15 |
+| + 9-frame offset calibration from one day, tested on all other days | **3.98°** | 13/15 |
+| + 13-frame affine calibration (as in the demo), other days | 4.01° | |
 | Webcam demo, 16-point test after calibration (1 user, MacBook Pro 16") | 1.55°, 1.9 cm on screen | |
 
 The demo number is the same-session accuracy for one user; the LOPO numbers are what to expect for a new person in new conditions. Precision (frame-to-frame jitter) in the demo is 0.54°.
@@ -139,6 +140,10 @@ Tips: sit about 70 cm from the screen with light on your face, and calibrate aga
 ## Status
 
 Personal project, finished in October 2026. The evaluation has not been peer reviewed.
+
+## Related
+
+[gaze-XR-training](https://github.com/fammad/gaze-XR-training): the same question in VR. An infrared eye tracker built into a Meta Quest 3, with a Unity toolkit and an analysis of which gaze metrics a setup like this can support.
 
 ## Credits
 

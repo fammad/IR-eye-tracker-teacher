@@ -1,0 +1,29 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install numpy scipy matplotlib opencv-python-headless
+      - name: Compile
+        run: python -m py_compile *.py
+      - name: Metrics self-check
+        run: python metrics.py
+      - name: Model forward pass
+        run: |
+          python -c "
+          import json, torch
+          from gaze_model import build_model
+          m = build_model(json.load(open('results/final/config.json')))
+          out = m(torch.zeros(4, 1, 36, 60), torch.zeros(4, 2))
+          assert out.shape == (4, 2); print('ok', tuple(out.shape))"

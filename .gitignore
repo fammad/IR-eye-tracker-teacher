@@ -24,3 +24,6 @@ heatmaps/
 
 # Stimulus images and videos: get_stimuli.py downloads the paintings and writes CREDITS.md
 stimuli/
+
+# private drafts
+portfolio_texts/
