@@ -1,4 +1,23 @@
-# GazeMap: Webcam Eye Tracking and Attention Heatmaps
+# GazeMap IR teacher
+
+A cheap infrared eye tracker is worn for a few minutes, labels what the webcam
+sees, and is then taken off. Does the webcam gaze model, personalised with those
+labels, stay more accurate in a new room than with a normal 9-point calibration?
+
+Course project for EQ2700 at KTH (autumn 2026). This repository is a fork of
+[GazeMap](https://github.com/fammad/GazeMap), starting from its commit `8c13977`
+with the full history. The webcam model, its training and its evaluation below
+are GazeMap's and are unchanged.
+
+- How to run the study: [docs/STUDY.md](docs/STUDY.md)
+- Analysis plan, fixed before the first participant: [docs/ANALYSIS_PLAN.md](docs/ANALYSIS_PLAN.md)
+
+Status: building. Offline simulation and Gate 1 tools done; IR pipeline next.
+
+---
+
+## Where this started: GazeMap
+
 
 [![CI](https://github.com/fammad/GazeMap/actions/workflows/ci.yml/badge.svg)](https://github.com/fammad/GazeMap/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white)](https://www.python.org/)

@@ -27,3 +27,10 @@ stimuli/
 
 # private drafts
 portfolio_texts/
+
+# IR teacher study
+dataset
+data/
+results/sim/
+*.avi
+_incoming/
