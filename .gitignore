@@ -37,3 +37,4 @@ _incoming/
 
 # Local notes, plans and handover (never committed)
 _local/
+.venv/
