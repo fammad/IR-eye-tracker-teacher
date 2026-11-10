@@ -34,7 +34,7 @@ Error: mean angular error per eye in degrees, person-equal average, as in GazeMa
 Caveat: one MPIIGaze day spans several short sessions spread over a day, so it
 is more varied than one 8-minute study session. Treat the gains as an upper bound.
 
-Usage (from anywhere, GazeMap in ../00_GazeMap or GAZEMAP_DIR set):
+Usage (MPIIGaze in dataset/, models download on first use):
   python sim/simulate_teacher.py                  # all people, 5 repeats
   python sim/simulate_teacher.py --people p09 p10 --repeats 2   # quick check
 Outputs go to results/sim/ in the study folder.
@@ -51,7 +51,7 @@ import numpy as np
 import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from gm import MODEL_DIR, STUDY_DIR, gaze_model  # noqa: E402
+from gm import MODEL_DIR, STUDY_DIR, ensure_models, gaze_model  # noqa: E402
 
 OUT_DIR = STUDY_DIR / "results" / "sim"
 SEED = 7
@@ -438,6 +438,7 @@ def main():
     parser.add_argument("--repeats", type=int, default=5)
     args = parser.parse_args()
 
+    ensure_models()
     with open(MODEL_DIR.parent / "config.json") as f:
         config = json.load(f)
     people = args.people or gaze_model.list_people()

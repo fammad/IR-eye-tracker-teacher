@@ -16,14 +16,17 @@ jobs:
           pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install numpy scipy matplotlib opencv-python-headless
       - name: Compile
-        run: python -m py_compile *.py
+        run: python -m py_compile gm.py gazemap/*.py study/*.py sim/*.py tests/*.py tools/*.py
       - name: Metrics self-check
-        run: python metrics.py
+        run: python gazemap/metrics.py
       - name: Model forward pass
         run: |
           python -c "
-          import json, torch
+          import json, sys, torch
+          sys.path.insert(0, 'gazemap')
           from gaze_model import build_model
           m = build_model(json.load(open('results/final/config.json')))
           out = m(torch.zeros(4, 1, 36, 60), torch.zeros(4, 2))
           assert out.shape == (4, 2); print('ok', tuple(out.shape))"
+      - name: Study maths on synthetic data
+        run: python tests/test_geometry.py
