@@ -3,8 +3,8 @@
 Can a cheap IR eye tracker, worn for a few minutes and then removed, personalise
 the GazeMap webcam model better than a normal 9-point calibration?
 
-The study scripts live in `study/`, `sim/` and `tests/`. They use the GazeMap code in the
-repository root through `gm.py`.
+The study scripts live in `study/`, `sim/` and `tests/`. They use the webcam model in
+`gazemap/` through `gm.py`. Run everything from the repository root.
 
 ## Order of work
 
@@ -23,7 +23,7 @@ Do not start step 4 before steps 1 to 3 have passed.
 
 ```bash
 cd 02_IR_tracker
-source ../00_GazeMap/.gazemap-env/bin/activate   # the GazeMap environment works here too
+source .venv/bin/activate
 
 # room A
 python study/measure_distance.py --session PILOT1 --distance-cm 60
@@ -71,7 +71,7 @@ and deleted when the course is graded, as written in the consent form.
 
 | File | Purpose |
 |---|---|
-| `gm.py` | connects the study scripts to the GazeMap code in the repo root |
+| `gm.py` | connects the study scripts to `gazemap/`, downloads the v1.0.0 models if missing |
 | `study/common.py` | folders, dot layouts, event and frame timing |
 | `study/measure_distance.py` | focal length per participant from one tape distance |
 | `study/record_block.py` | records a dot block: raw webcam (and IR) video, frame times, screen events |

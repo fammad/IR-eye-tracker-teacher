@@ -1,10 +1,13 @@
-GazeMap
+IR Eye Tracker Teacher
 Copyright 2026 Fuad Mammadov
-https://github.com/fammad/GazeMap
+https://github.com/fammad/IR-eye-tracker-teacher
 
 This product includes software developed by Fuad Mammadov.
 Licensed under the Apache License, Version 2.0 (see LICENSE).
 
-The trained model weights distributed in the "models" release are derived
+The webcam gaze model in gazemap/ comes from GazeMap
+(https://github.com/fammad/GazeMap, Copyright 2026 Fuad Mammadov, Apache 2.0).
+
+The trained model weights used here are GazeMap release v1.0.0. They are derived
 from the MPIIGaze dataset (Zhang, Sugano, Fritz and Bulling, MPI Informatics)
 and are provided under CC BY-NC-SA 4.0, for non-commercial use only.

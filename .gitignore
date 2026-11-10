@@ -34,3 +34,6 @@ data/
 results/sim/
 *.avi
 _incoming/
+
+# Local notes, plans and handover (never committed)
+_local/

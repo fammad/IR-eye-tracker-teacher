@@ -1,189 +1,177 @@
-# GazeMap IR teacher
+# IR Eye Tracker Teacher
 
-A cheap infrared eye tracker is worn for a few minutes, labels what the webcam
-sees, and is then taken off. Does the webcam gaze model, personalised with those
-labels, stay more accurate in a new room than with a normal 9-point calibration?
-
-Course project for EQ2700 at KTH (autumn 2026). This repository is a fork of
-[GazeMap](https://github.com/fammad/GazeMap), starting from its commit `8c13977`
-with the full history. The webcam model, its training and its evaluation below
-are GazeMap's and are unchanged.
-
-- How to run the study: [docs/STUDY.md](docs/STUDY.md)
-- Analysis plan, fixed before the first participant: [docs/ANALYSIS_PLAN.md](docs/ANALYSIS_PLAN.md)
-
-Status: building. Offline simulation and Gate 1 tools done; IR pipeline next.
-
----
-
-## Where this started: GazeMap
-
-
-[![CI](https://github.com/fammad/GazeMap/actions/workflows/ci.yml/badge.svg)](https://github.com/fammad/GazeMap/actions/workflows/ci.yml)
-[![Python](https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![CI](https://github.com/fammad/IR-eye-tracker-teacher/actions/workflows/ci.yml/badge.svg)](https://github.com/fammad/IR-eye-tracker-teacher/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/Python-3.12+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
-[![OpenCV](https://img.shields.io/badge/OpenCV-5C3EE8?logo=opencv&logoColor=white)](https://opencv.org/)
-[![MediaPipe](https://img.shields.io/badge/MediaPipe-0097A7?logo=google&logoColor=white)](https://ai.google.dev/edge/mediapipe)
-[![Dataset: MPIIGaze](https://img.shields.io/badge/dataset-MPIIGaze-2EA44F)](https://www.mpi-inf.mpg.de/departments/computer-vision-and-machine-learning/research/gaze-based-human-computer-interaction/appearance-based-gaze-estimation-in-the-wild)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 
-<img src="assets/demo_pedestrians.gif" width="100%" alt="Gaze trail over a street scene, next to the webcam image it comes from">
+A webcam eye tracker is cheap but rough, about 4 to 5 degrees off for a new person.
+An infrared eye tracker is accurate but needs hardware on your face. This project
+uses both, briefly: you wear a low-cost IR tracker for a few minutes, it labels
+what the webcam sees, and you take it off. The webcam model, personalised with
+those labels, keeps working on its own.
 
+The question: does it stay more accurate in a new room, with new light and a new
+seat, than the same webcam model after a normal 9-point calibration?
 
+Course project for EQ2700 at KTH, autumn 2026. Built on
+[GazeMap](https://github.com/fammad/GazeMap), whose trained webcam model it uses
+unchanged.
 
-
-GazeMap turns a laptop webcam into a simple eye tracker. A neural network trained on the MPIIGaze dataset estimates where each eye is looking. After a one-minute calibration, it maps your gaze to the screen and shows where you looked on any image or video. Everything runs on your own computer.
-
-## About the project
-Eye trackers show where people look and how their attention changes. That is used in usability testing, reading research, accessibility tools and driver monitoring. Most of them rely on infrared cameras and special hardware. A normal webcam is everywhere, but it is harder to use due to low resolution, changing light, and every person's eyes look different.
-
-This project asks how well a small model and a webcam can perform, and measures it honestly. It has three parts:
-
-1. **A gaze model:** a CNN trained from scratch in PyTorch and tested only on people it never saw during training.
-2. **An evaluation** of what each design choice bought, how calibration holds up, and where the model fails (head turned away, partly covered eyes, gaze outside the training range).
-3. **A working demo** that anyone can download, calibrate to themselves and use to record gaze heatmaps on images and video.
-
-## How it works
-
-| 1. Webcam | 2. Calibrate | 3. Check | 4. Map |
-|---|---|---|---|
-| ![Webcam view with gaze arrows](assets/step_webcam.jpg) | ![13 calibration dots](assets/step_calibration.jpg) | ![Accuracy test](assets/step_test.jpg) | ![Attention heatmap](assets/step_heatmap.jpg) |
-| Finds your face and estimates where each eye looks with CNN. | Look at 13 dots to get personalized calibration. | Check accuracy by looking at 16 dots. Each arrow shows the error. | Watch an image or video, get a heatmap. |
-
-MediaPipe finds the eye and mouth corners, a 3D face model gives the head pose, and each eye is cropped and straightened the same way as the training images. The trained CNN predicts a gaze direction per eye, and calibration maps it onto the screen.
-
-## Examples
-
-| Human perception | Complex scenes |
-|---|---|
-| ![Girl with a Pearl Earring heatmap](assets/gallery_pearl_earring.jpg) | ![Netherlandish Proverbs heatmap](assets/gallery_proverbs.jpg) |
-| Faces pull attention first. | How attention spreads over a busy image. |
-| **Reading** | **Visual search** |
-| ![Reading heatmap](assets/gallery_reading.jpg) | ![Visual search heatmap](assets/gallery_search.jpg) |
-| Which lines get read. | How someone scans a layout to find a target. |
-
-
-<img src="assets/demo_driving.gif" width="100%" alt="Gaze trail over driving footage">
-
-**Driving footage:** where the eyes were when something happened on the road. As a research demo.
-
-## Results
-
-### Setup
-
-| | |
-|---|---|
-| Dataset | MPIIGaze, normalized eye images: 15 people, 213,658 frames, 427,316 eye images (left eyes mirrored) |
-| Protocol | Leave-one-person-out (LOPO): 15 folds, each trains a fresh model on 14 people and tests on the held-out one |
-| Metric | Mean angular error (MAE) in degrees between predicted and true 3D gaze vectors |
-| Averaging | Person-equal: MAE per held-out person, then the mean over 15 people. Standard errors are in [docs/EVALUATION.md](docs/EVALUATION.md) |
-| Model | 2 conv layers (20, 50 filters, 5×5) + FC 500 + head pose → pitch, yaw. Same layout as MnistNet in Zhang et al. |
-| Training | Adam, lr 1e-3 (×0.1 after epoch 10), 15 epochs, batch 128, MSE loss, fixed seed. Last epoch reported, no early stopping on test data |
-
-### Accuracy
-
-| Condition | MAE | People improved |
-|---|---|---|
-| Unseen person, single eye | 6.03° | |
-| Unseen person, both eyes fused in camera space | 4.97° | 15/15 |
-| + 9-frame offset calibration from one day, tested on all other days | **3.98°** | 13/15 |
-| + 13-frame affine calibration (as in the demo), other days | 4.01° | |
-| Webcam demo, 16-point test after calibration (1 user, MacBook Pro 16") | 1.55°, 1.9 cm on screen | |
-
-The demo number is the same-session accuracy for one user; the LOPO numbers are what to expect for a new person in new conditions. Precision (frame-to-frame jitter) in the demo is 0.54°.
-
-![Error per person, by head rotation and under image problems](assets/results.png)
-
-### Failure analysis
-
-| Factor | Condition | MAE | Change |
-|---|---|---|---|
-| Head rotation away from camera | 0-10° / 10-20° / 20-30° | 5.84° / 6.00° / 6.11° | |
-| | 30-40° | 7.28° | +1.4° vs frontal |
-| Calibration under head movement | head within 10° of calibration pose | gain 0.86-0.91° | |
-| | head turned >20° | gain 0.50° | gain drops ~45% |
-| Eye partly covered | top 30% of eye image black | 8.42° | +2.39° |
-| Sensor noise | Gaussian, σ = 0.2 | 7.56° | +1.53° |
-| Blur | Gaussian, σ = 2 px | 6.88° | +0.85° |
-| Low light | pixel values ×0.2, then histogram equalization | 6.03° | +0.00° |
-
-Image conditions are synthetic, applied to each held-out person with no retraining. Head-pose bins are checked within each person: turned samples (≥25°) were worse than frontal (<10°) for 12 of 15 people, so the effect is not just harder people sitting more turned.
-
-### Comparison with published results
-
-Zhang et al. (TPAMI 2019) report LOPO MAE of 6.3° for MnistNet and 5.5° for GazeNet (VGG-16, ImageNet-pretrained). GazeMap's 6.03° uses the MnistNet layout but trains on all frames (~400k eye images per fold) instead of the paper's 3,000 per person (42k per fold), so it is not a like-for-like comparison.
-
-More detail and the checks behind each claim: [docs/EVALUATION.md](docs/EVALUATION.md).
-
-## Quick start
-
-```bash
-git clone https://github.com/fammad/GazeMap.git
-cd GazeMap
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-
-python gaze_demo.py --calibrate                      # calibrate, then live gaze arrows
-python gaze_demo.py --test                           # check accuracy
-python gaze_demo.py --heatmap --stimulus image.png   # heatmap on an image or a folder of images
-python gaze_demo.py --video clip.mp4                 # gaze trail and heatmap on a video
-```
-
-The trained models (about 100 MB) download on the first run. After that no internet is needed. Results are saved in `heatmaps/`.
-
-Tips: sit about 70 cm from the screen with light on your face, and calibrate again if you move. `python get_stimuli.py` downloads the example paintings.
-
-## Train and evaluate it yourself
-
-1. Download [MPIIGaze](https://www.mpi-inf.mpg.de/departments/computer-vision-and-machine-learning/research/gaze-based-human-computer-interaction/appearance-based-gaze-estimation-in-the-wild) into `dataset/`.
-2. `python train_lopo.py --all` trains the 15 models and the ablation steps (about 4 hours on an Apple M1).
-3. `python evaluate.py`, `python analyze_pose.py` and `python robustness.py` produce the numbers and plots in `results/`.
-
-## Limitations
-
-- It only knows gaze directions that appear in the training data, roughly the area of a laptop screen. Looking far above the camera is not recognised.
-- Calibration holds for the position you sat in. Moving your chair or desk needs a new one.
-- The on-screen accuracy is from one user on one laptop.
-- A webcam is not an infrared eye tracker. Expect centimetres, not millimetres.
-
-## Project files
-
-| File | Purpose |
-|---|---|
-| `gaze_demo.py` | the demo: calibration, accuracy test, heatmaps, video |
-| `gaze_model.py` | the network and data loading |
-| `train_lopo.py` | training, one model per held-out person |
-| `evaluate.py`, `analyze_pose.py`, `robustness.py` | the evaluation in [docs/EVALUATION.md](docs/EVALUATION.md) |
-| `get_stimuli.py` | downloads the example paintings |
+This README is also a blueprint: every stage below says what it does, how to run
+it, what comes out, and how to change it for your own setup.
 
 ## Status
 
-Personal project, finished in October 2026. The evaluation has not been peer reviewed.
+| Stage | State |
+|---|---|
+| Webcam base model | done (GazeMap v1.0.0) |
+| Offline teacher simulation | done |
+| Recording, processing, distance calibration | done, first real run pending |
+| Gate 1 (is there a gap to close?) | tool done, not run yet |
+| IR tracker hardware | being built |
+| IR pipeline (pupil, glint, calibration) | planned |
+| Session recorder and user study | planned |
+| Analysis and figures | planned |
 
-## Related
+## The pipeline
 
-[gaze-XR-training](https://github.com/fammad/gaze-XR-training): the same question in VR. An infrared eye tracker built into a Meta Quest 3, with a Unity toolkit and an analysis of which gaze metrics a setup like this can support.
-
-## Credits
-
-MPIIGaze dataset: Zhang, Sugano, Fritz and Bulling ([paper](https://arxiv.org/abs/1711.09017)). Face landmarks: Google MediaPipe. Paintings: public domain, via Wikimedia Commons.
-
-## License
-
-- **Code:** [Apache License 2.0](LICENSE). If you use or redistribute it, keep the [NOTICE](NOTICE) file, which credits the author.
-- **Trained models:** CC BY-NC-SA 4.0, the same terms as the MPIIGaze dataset they were trained on (non-commercial use only).
-
-## Citation
-
-If GazeMap helps your work, please cite it:
-
-```bibtex
-@software{mammadov_gazemap_2026,
-  author = {Mammadov, Fuad},
-  title  = {GazeMap: Webcam Eye Tracking and Attention Heatmaps},
-  year   = {2026},
-  url    = {https://github.com/fammad/GazeMap}
-}
+```
+ 1 build the IR tracker          hardware, docs/hardware/BUILD.md
+ 2 webcam base model             GazeMap v1.0.0 weights (or retrain)
+ 3 per-person setup              measure distance -> focal length
+ 4 record room A                 webcam + IR video, one clock, dots + natural tasks
+ 5 IR labels                     pupil + glint -> gaze point per frame        (planned)
+ 6 personalise                   refit the webcam model's last layer on IR labels
+ 7 test in room B                webcam only, new room, light and seat
+ 8 compare and visualise         generic / 9-point / IR / hybrid / fresh calibration
 ```
 
-GitHub's "Cite this repository" button gives the same in other formats.
+### 1. Build the IR tracker
+
+A near-eye camera with 850 nm illumination on a 3D-printed glasses frame, sitting
+below the eye so it stays out of the webcam's eye crop. Parts, printing, wiring and
+eye-safety limits: [docs/hardware/BUILD.md](docs/hardware/BUILD.md).
+
+### 2. Webcam base model
+
+A small CNN (2 conv layers, 500 hidden units, head pose input) trained on
+MPIIGaze with leave-one-person-out: 15 models, each never saw one person.
+The 15 weights come from [GazeMap release v1.0.0](https://github.com/fammad/GazeMap/releases/tag/v1.0.0)
+and download once on first use into `results/final/models/` (about 100 MB,
+not stored in this repository).
+
+Starting point, from GazeMap's own evaluation:
+
+| Condition (MPIIGaze, unseen person) | Error |
+|---|---|
+| single eye | 6.03° |
+| both eyes fused | 4.97° |
+| + 9-frame offset calibration, tested on other days | 3.98° |
+| live webcam, same session, one user | 1.55° |
+
+Retraining is only needed if you change the network. Then: download MPIIGaze into
+`dataset/` and run `python gazemap/train_lopo.py --all` (about 4 hours on an M1).
+
+### 3. Per-person setup
+
+The webcam's focal length and the person's face size are unknown, so the code
+can misjudge how far away the eyes are. One tape-measured distance fixes both:
+
+```bash
+python study/measure_distance.py --session P01 --distance-cm 60
+```
+
+### 4. Record
+
+Everything is recorded raw and processed afterwards, so a bug found later never
+costs a participant. Dots: `calib9` (3x3), `test16` (4x4), `check3` (drift).
+
+```bash
+python study/record_block.py --session P01 --room A --block calib9 --note "desk lamp, blinds closed"
+python study/process_block.py data/P01
+```
+
+### 5. IR labels (planned)
+
+Pupil and corneal glint in each IR frame, a 9-point calibration to the screen,
+then a gaze point for every webcam frame on the shared clock.
+
+### 6. Personalise
+
+Only the last layer of the webcam model is refitted (502 inputs to pitch and yaw),
+pulled towards the original weights. Closed form, takes seconds, cannot diverge.
+The pull strength is fixed from the simulation, never tuned on participants.
+Hybrid: the same, with the constant part re-fitted on the 9 calibration dots.
+
+### 7. Test in room B
+
+A different room and light, same laptop, webcam only. 16 dots at two seat
+positions, then a fresh 9-point calibration as the best case.
+
+### 8. Compare and visualise
+
+| Condition | Uses |
+|---|---|
+| generic | nothing personal |
+| 9-point offset (baseline) | room A 9-point |
+| IR still | IR labels from the room A dot test |
+| IR natural (main) | IR labels from natural tasks |
+| hybrid | IR natural + 9-point constant |
+| fresh 9-point (ceiling) | room B 9-point |
+
+One primary comparison, fixed in advance: room B error, IR natural vs 9-point.
+Full plan: [docs/ANALYSIS_PLAN.md](docs/ANALYSIS_PLAN.md).
+
+## Try the parts that work now
+
+```bash
+git clone https://github.com/fammad/IR-eye-tracker-teacher.git
+cd IR-eye-tracker-teacher
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+
+python tests/test_geometry.py             # checks the maths on synthetic data
+python gazemap/gaze_demo.py --calibrate   # GazeMap's live demo
+python sim/simulate_teacher.py            # needs MPIIGaze in dataset/
+```
+
+Run everything from the repository root. Step-by-step study protocol, including
+Gate 1: [docs/STUDY.md](docs/STUDY.md).
+
+## Make it yours
+
+- **Other laptop or screen:** pass `--screen-width-mm` and `--camera-offset-mm`
+  (camera centre to the top edge of the screen image) to `record_block.py`.
+- **Other webcam:** run `measure_distance.py` again; the focal length is per camera.
+- **Other IR camera:** pass its index with `--ir-camera`; check the eye image in
+  the preview before the first block.
+- **Your own base model:** retrain (stage 2) and put the 15 `.pt` files in
+  `results/final/models/`.
+
+## Repository layout
+
+| Folder | Contents |
+|---|---|
+| `gazemap/` | the webcam model from GazeMap: network, live pipeline, training, evaluation |
+| `study/` | distance calibration, recording, processing, Gate 1 |
+| `sim/` | offline teacher simulation on MPIIGaze |
+| `tests/` | checks with known answers |
+| `tools/` | helpers, e.g. downloading the stimulus images |
+| `docs/` | study protocol, analysis plan, hardware guide, credits |
+| `gm.py` | connects the study scripts to `gazemap/` |
+
+Not in git: `dataset/` (MPIIGaze), `results/final/models/` (downloaded),
+`data/` (recordings with faces), `stimuli/`.
+
+## Privacy
+
+Recordings contain faces. They stay in `data/`, which is never committed.
+Sessions are named by code (P01), never by name.
+
+## Credits, licence, citation
+
+Credits and related work: [docs/CREDITS.md](docs/CREDITS.md).
+Code: [Apache 2.0](LICENSE), keep the [NOTICE](NOTICE). The trained weights are
+CC BY-NC-SA 4.0 (non-commercial), as the MPIIGaze data they come from.
+To cite this project, use GitHub's "Cite this repository" ([CITATION.cff](CITATION.cff)).

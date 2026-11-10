@@ -1,21 +1,29 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
-title: "GazeMap: Webcam Eye Tracking and Attention Heatmaps"
+title: "IR Eye Tracker Teacher: personalising a webcam gaze model with a removable infrared eye tracker"
 type: software
 authors:
   - family-names: Mammadov
     given-names: Fuad
-repository-code: "https://github.com/fammad/GazeMap"
-url: "https://github.com/fammad/GazeMap"
+    affiliation: "KTH Royal Institute of Technology"
+repository-code: "https://github.com/fammad/IR-eye-tracker-teacher"
+url: "https://github.com/fammad/IR-eye-tracker-teacher"
 license: Apache-2.0
-date-released: 2026-10-18
 keywords:
   - gaze estimation
   - eye tracking
+  - infrared eye tracker
   - webcam
-  - attention heatmap
-  - MPIIGaze
+  - personalisation
+  - cross-modal supervision
 references:
+  - type: software
+    title: "GazeMap: Webcam Eye Tracking and Attention Heatmaps"
+    authors:
+      - family-names: Mammadov
+        given-names: Fuad
+    url: "https://github.com/fammad/GazeMap"
+    version: "v1.0.0"
   - type: article
     title: "MPIIGaze: Real-World Dataset and Deep Appearance-Based Gaze Estimation"
     authors:
