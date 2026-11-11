@@ -62,6 +62,7 @@ QUALITY_K = 300              # E3
 NOISES_DEG = [0.0, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0]
 BIASES_DEG = [0.0, 1.0, 2.0]
 SCALES = [0.05, 0.1, 0.2]       # E3, error growing towards the edges
+CLEAR_MARGIN_DEG = 0.2          # what counts as a clear win over 9-point
 LAMBDAS = [1e-3, 1e-2, 1e-1, 1.0, 10.0, 1e6]  # 1e6 is effectively the offset
 BIAS_PENALTY = 1e-6          # the constant term is almost free to move
 MEAN_TO_SIGMA = np.sqrt(np.pi / 2)  # 2D Gaussian: mean angular error = sigma * sqrt(pi/2)
@@ -361,23 +362,26 @@ def summarise(rows):
                                "delta_se": diff.std() / np.sqrt(len(diff)) if diff is not None and len(diff) else "",
                                "better_than_9point": better, "lambda_all": frozen.get(key, "")})
 
-    # Break-even teacher error: largest noise where ridge on the teacher still beats 9-point on average.
+    # Break-even teacher error: largest random error where the teacher still clearly beats 9-point:
+    # on average by at least CLEAR_MARGIN_DEG, and for at least two thirds of the people.
     base = per_person.get(("E3", "9-point", "offset"), {})
+    lines.append(f"\nTeacher clearly beats 9-point (at least {CLEAR_MARGIN_DEG} deg better on average, "
+                 "for at least 2/3 of people):")
     for method in ("ridge", "hybrid"):
         for bias in BIASES_DEG:
             ok = []
             for noise in NOISES_DEG:
                 vals = per_person.get(("E3", f"noise {noise} bias {bias}", method), {})
-                common = [p for p in vals if p in base]
-                if common and np.mean([vals[p] - base[p] for p in common]) < 0:
+                diff = np.array([vals[p] - base[p] for p in vals if p in base])
+                if len(diff) and diff.mean() <= -CLEAR_MARGIN_DEG and (diff < 0).mean() >= 2 / 3:
                     ok.append(noise)
             if not ok:
-                verdict = "never, even with a perfect teacher"
-            elif max(ok) == max(NOISES_DEG):
-                verdict = f"at least up to {max(ok)} deg (the largest tested)"
+                verdict = "no"
+            elif ok == NOISES_DEG:
+                verdict = f"yes, for random error up to {max(ok)} deg (the largest tested)"
             else:
-                verdict = f"up to {max(ok)} deg"
-            lines.append(f"\nTeacher beats 9-point ({method}, bias {bias} deg): {verdict}")
+                verdict = f"only for random error of {', '.join(str(n) for n in ok)} deg"
+            lines.append(f"  {method:6s} constant shift {bias} deg: {verdict}")
     return "\n".join(lines), table_rows, frozen
 
 

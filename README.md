@@ -26,7 +26,7 @@ it, what comes out, and how to change it for your own setup.
 | Stage | State |
 |---|---|
 | Webcam base model | done (GazeMap v1.0.0) |
-| Offline teacher simulation | done |
+| Offline teacher simulation | done: hybrid with 300 IR-style labels beats 9-point by 0.4° on MPIIGaze (14/15 people) |
 | Recording, processing, distance calibration | done, first real run pending |
 | Gate 1 (is there a gap to close?) | tool done, not run yet |
 | IR tracker hardware | being built |
@@ -101,8 +101,10 @@ then a gaze point for every webcam frame on the shared clock.
 
 Only the last layer of the webcam model is refitted (502 inputs to pitch and yaw),
 pulled towards the original weights. Closed form, takes seconds, cannot diverge.
-The pull strength is fixed from the simulation, never tuned on participants.
-Hybrid: the same, with the constant part re-fitted on the 9 calibration dots.
+The pull strength (0.1) is fixed from the simulation, never tuned on participants.
+Hybrid, the main method: the same, then the constant part is re-fitted on the 9
+calibration dots. The IR labels set the shape, the 9 points set the position, so a
+slipping frame cannot shift everything.
 
 ### 7. Test in room B
 
@@ -115,12 +117,12 @@ positions, then a fresh 9-point calibration as the best case.
 |---|---|
 | generic | nothing personal |
 | 9-point offset (baseline) | room A 9-point |
-| IR still | IR labels from the room A dot test |
-| IR natural (main) | IR labels from natural tasks |
-| hybrid | IR natural + 9-point constant |
+| IR still, hybrid | IR labels from the room A dot test + 9-point |
+| IR natural, ridge only | IR labels from natural tasks |
+| IR natural, hybrid (main) | IR labels from natural tasks + 9-point constant |
 | fresh 9-point (ceiling) | room B 9-point |
 
-One primary comparison, fixed in advance: room B error, IR natural vs 9-point.
+One primary comparison, fixed in advance: room B error, IR natural hybrid vs 9-point.
 Full plan: [docs/ANALYSIS_PLAN.md](docs/ANALYSIS_PLAN.md).
 
 ## Try the parts that work now
